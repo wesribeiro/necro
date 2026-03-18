@@ -14,8 +14,9 @@ const STATUS = {
 
 class Monitor {
   constructor(config, win) {
-    this.config      = config.monitor;
-    this.serverName  = config.server.name;
+    this.config           = config.monitor;
+    this.scheduledRestart = config.scheduledRestart || {};
+    this.serverName       = config.server.name;
     this.win         = win;
     this.status      = STATUS.RUNNING;
     this.lastStart   = null;
@@ -376,7 +377,21 @@ class Monitor {
   _emitTick() {
     if (!this._nextCheckAt) return;
     const secsLeft = Math.max(0, Math.round((this._nextCheckAt - Date.now()) / 1000));
-    this._emitToRenderer('monitor:tick', { secsLeft, intervalSecs: this.config.checkIntervalSeconds });
+
+    // Countdown do reinicio por intervalo (scheduledRestart.interval)
+    let intervalSecsLeft = null;
+    const iv = this.scheduledRestart.interval;
+    if (iv && iv.enabled && this.lastStart) {
+      const elapsed     = (Date.now() - this.lastStart.getTime()) / 1000;
+      const intervalSec = iv.hours * 3600;
+      intervalSecsLeft  = Math.max(0, Math.round(intervalSec - elapsed));
+    }
+
+    this._emitToRenderer('monitor:tick', {
+      secsLeft,
+      intervalSecs:     this.config.checkIntervalSeconds,
+      intervalSecsLeft, // null se restart por intervalo não está ativo
+    });
   }
 
   _sleep(ms) {

@@ -103,42 +103,120 @@ api.onLog((data) => {
   addLogLine(data.time, data.message, cls, data.date || '');
 });
 
-// Countdown até a próxima verificação — agora na linha MONITORAMENTO
+// ─── Contagens regressivas em tempo real ─────────────────────────────────
 const valNextCheck    = document.getElementById('val-next-check');
 const valMonitoramento= document.getElementById('val-monitoramento');
 
+// Variáveis dos timers locais (correm no renderer a cada 1s)
+let _checkTimer    = null;   // countdown p/ próxima verificação
+let _autoTimer     = null;   // countdown p/ reinício automático (intervalo)
+let _diarioTimer   = null;   // countdown p/ reinício diário (horário fixo)
+
+// Config local (salva ao abrir settings, atualizada ao salvar)
+let _localCfg = null;
+
+// Formata segundos → "Xh Xm Xs" ou "Xm Xs" ou "Xs"
+function fmtCountdown(s) {
+  if (s <= 0) return '0s';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2,'0')}m ${sec.toString().padStart(2,'0')}s`;
+  if (m > 0) return `${m}m ${sec.toString().padStart(2,'0')}s`;
+  return `${sec}s`;
+}
+
+// Calculates segundos até o próximo horário fixo (HH:MM)
+function secsUntilTime(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  const now    = new Date();
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  return Math.round((target - now) / 1000);
+}
+
+// Inicia countdown da próxima verificação
+function startCheckCountdown(initialSecs) {
+  clearInterval(_checkTimer);
+  let s = Math.max(0, initialSecs);
+  const tick = () => {
+    if (!valNextCheck) return;
+    valNextCheck.textContent = s > 0 ? `⋅ ${s}s` : '';
+    if (s > 0) s--;
+  };
+  tick();
+  _checkTimer = setInterval(tick, 1000);
+}
+
+// Inicia countdown do reinício automático (por intervalo)
+function startAutoCountdown(initialSecs) {
+  clearInterval(_autoTimer);
+  const rowAuto = document.getElementById('row-reinicio-auto');
+  const valAuto = document.getElementById('val-reinicio-auto');
+  if (!rowAuto || !valAuto) return;
+  if (initialSecs === null) { rowAuto.hidden = true; return; }
+  rowAuto.hidden = false;
+  let s = Math.max(0, initialSecs);
+  const tick = () => { valAuto.textContent = fmtCountdown(s); if (s > 0) s--; };
+  tick();
+  _autoTimer = setInterval(tick, 1000);
+}
+
+// Inicia countdown do reinício diário (por horário fixo)
+function startDiarioCountdown(timeStr) {
+  clearInterval(_diarioTimer);
+  const rowDiario = document.getElementById('row-reinicio-diario');
+  const valDiario = document.getElementById('val-reinicio-diario');
+  if (!rowDiario || !valDiario) return;
+  if (!timeStr) { rowDiario.hidden = true; return; }
+  rowDiario.hidden = false;
+  let s = secsUntilTime(timeStr);
+  const tick = () => {
+    valDiario.textContent = fmtCountdown(s);
+    if (s > 0) { s--; }
+    else { s = secsUntilTime(timeStr); } // reinicia para o dia seguinte
+  };
+  tick();
+  _diarioTimer = setInterval(tick, 1000);
+}
+
+// Recebe tick do main process → reinicia timers locais com o valor fresco
 api.onTick((data) => {
-  if (!valNextCheck || !valMonitoramento) return;
-  if (data && data.secsLeft > 0) {
-    valNextCheck.textContent = `⋅ ${data.secsLeft}s`;
-  } else {
-    valNextCheck.textContent = '';
+  if (!data) return;
+  startCheckCountdown(data.secsLeft);
+  // intervalSecsLeft: null = desativado, número = ativo
+  if (typeof data.intervalSecsLeft === 'number') {
+    startAutoCountdown(data.intervalSecsLeft);
   }
 });
 
-// Atualiza as linhas de reinicio agendado com base na config
+// Atualiza as linhas de agendamento e mantém countdowns corretos
 function updateScheduleRows(cfg) {
   if (!cfg) return;
+  _localCfg = cfg;
   const ft = (cfg.scheduledRestart || {}).fixedTime || {};
-  const iv = (cfg.scheduledRestart || {}).interval  || {};
+  const iv  = (cfg.scheduledRestart || {}).interval  || {};
 
-  const rowDiario = document.getElementById('row-reinicio-diario');
-  const rowAuto   = document.getElementById('row-reinicio-auto');
-  const valDiario = document.getElementById('val-reinicio-diario');
-  const valAuto   = document.getElementById('val-reinicio-auto');
+  // Reinício Diário
+  if (ft.enabled) {
+    startDiarioCountdown(ft.time);
+  } else {
+    clearInterval(_diarioTimer);
+    const rowDiario = document.getElementById('row-reinicio-diario');
+    if (rowDiario) rowDiario.hidden = true;
+  }
 
-  if (rowDiario && valDiario) {
-    rowDiario.hidden = !ft.enabled;
-    if (ft.enabled) valDiario.textContent = ft.time || '--:--';
+  // Reinício Automático — se desativado, esconde; se ativado, aguarda próximo tick
+  if (!iv.enabled) {
+    clearInterval(_autoTimer);
+    const rowAuto = document.getElementById('row-reinicio-auto');
+    if (rowAuto) rowAuto.hidden = true;
   }
-  if (rowAuto && valAuto) {
-    rowAuto.hidden = !iv.enabled;
-    if (iv.enabled) {
-      const h = iv.hours;
-      valAuto.textContent = Number.isInteger(h) ? `${h}h` : `${h}h`;
-    }
-  }
+  // Se iv.enabled, o próximo monitor:tick vai iniciar o countdown automaticamente
 }
+
 
 api.onStatusChanged((data) => {
   applyStatus(data);

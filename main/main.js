@@ -165,7 +165,8 @@ app.whenReady().then(() => {
         updateAutoStart();
 
         monitor.updateConfig(newCfg.monitor);
-        monitor.serverName = newCfg.server.name;
+        monitor.serverName       = newCfg.server.name;
+        monitor.scheduledRestart = newCfg.scheduledRestart || {};
 
         scheduler.stop();
         scheduler.cfg = newCfg.scheduledRestart;
