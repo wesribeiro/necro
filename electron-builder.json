@@ -1,0 +1,33 @@
+{
+  "appId": "com.necro.monitor",
+  "productName": "NECRO",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "main/**",
+    "renderer/**",
+    "services/**",
+    "logs/**",
+    "config/**",
+    "scripts/**",
+    "package.json",
+    "assets/**",
+    "Imagens/**",
+    "!logs/necro.log"
+  ],
+  "asar": false,
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "perMachine": false,
+    "warningsAsErrors": false,
+    "runAfterFinish": false,
+    "include": "assets/install-autostart.nsh"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "assets/logo.png",
+    "requestedExecutionLevel": "requireAdministrator"
+  }
+}

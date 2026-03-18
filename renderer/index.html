@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src https://fonts.gstatic.com https://fonts.googleapis.com;" />
+  <title>NECRO</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       BARRA DE TÍTULO CUSTOMIZADA
+       ══════════════════════════════════════════════ -->
+  <div class="titlebar" id="titlebar">
+    <div class="titlebar-brand">
+      <img src="../assets/logo.png" class="titlebar-logo" />
+      <span class="titlebar-label">NECRO</span>
+    </div>
+    <div class="titlebar-controls">
+      <button class="tb-btn tb-minimize"      id="btn-minimize"      title="Minimizar"></button>
+      <button class="tb-btn tb-expand-height" id="btn-expand-height" title="Expandir altura"></button>
+      <button class="tb-btn tb-close"         id="btn-close"         title="Fechar"></button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       PAINEL DE STATUS
+       ══════════════════════════════════════════════ -->
+  <div class="status-panel" id="status-panel">
+    <!-- Botão engrenagem: absoluto no canto superior direito do card -->
+    <button class="gear-btn" id="btn-settings" title="Configurações">&#9881;</button>
+    <div class="status-lines">
+      <div class="status-line">
+        <span class="status-key">PROCESSO:</span>
+        <span class="status-val" id="val-process">---</span>
+      </div>
+      <div class="status-line">
+        <span class="status-key">STATUS:</span>
+        <span class="status-val status-indicator" id="val-status">---</span>
+        <span class="next-check" id="val-next-check"></span>
+      </div>
+      <div class="status-line">
+        <span class="status-key">ÚLTIMO START:</span>
+        <span class="status-val" id="val-last-start">--:--:--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       BOTÕES DE CONTROLE
+       ══════════════════════════════════════════════ -->
+  <div class="controls">
+    <button class="ctrl-btn ctrl-pause"   id="btn-pause"  >PAUSAR</button>
+    <button class="ctrl-btn ctrl-restart" id="btn-restart">RESTART</button>
+    <button class="ctrl-btn ctrl-kill"    id="btn-kill"   >ENCERRAR</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       FEED DE LOG
+       ══════════════════════════════════════════════ -->
+  <div class="log-feed" id="log-feed"></div>
+
+  <!-- ══════════════════════════════════════════════
+       MODAL DE CONFIGURAÇÕES
+       ══════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modal-overlay" hidden>
+    <div class="modal" id="modal-settings">
+      <div class="modal-header">
+        <span class="modal-title">&#9881; Configurações</span>
+        <button class="modal-close" id="modal-close" title="Fechar">&#10005;</button>
+      </div>
+      <div class="modal-body">
+
+        <fieldset class="cfg-group">
+          <legend>Processo Monitorado</legend>
+
+          <label>Aplicação em execução
+            <div class="path-row">
+              <select id="cfg-processName" class="process-select">
+                <option value="">-- carregando processos... --</option>
+              </select>
+              <button type="button" class="browse-btn" id="btn-refresh-procs" title="Atualizar lista">&#8635;</button>
+            </div>
+          </label>
+
+          <label>Caminho do executável
+            <div class="path-row">
+              <input type="text" id="cfg-executablePath" placeholder="C:\App\monitor.exe" />
+              <button type="button" class="browse-btn" id="btn-browse" title="Navegar...">&#128193;</button>
+            </div>
+          </label>
+
+          <label>Intervalo de verificação (segundos)
+            <input type="number" id="cfg-checkInterval" min="5" max="3600" />
+          </label>
+
+          <label>Máximo de tentativas
+            <input type="number" id="cfg-maxRetries" min="1" max="20" />
+          </label>
+
+          <label>Espera entre tentativas (segundos)
+            <input type="number" id="cfg-retryDelay" min="1" max="300" />
+          </label>
+
+          <label>Aguardar após iniciar (segundos)
+            <input type="number" id="cfg-restartWait" min="5" max="300" />
+          </label>
+        </fieldset>
+
+        <fieldset class="cfg-group">
+          <legend>Servidor</legend>
+          <label>Nome do servidor
+            <input type="text" id="cfg-serverName" placeholder="SRV-PDV-01" />
+          </label>
+        </fieldset>
+
+        <fieldset class="cfg-group">
+          <legend>Geral</legend>
+          <label class="cfg-toggle">
+            <input type="checkbox" id="cfg-autoStart" />
+            Iniciar com o Windows
+          </label>
+          <label class="cfg-toggle" style="margin-top: 12px">
+            <input type="checkbox" id="cfg-startHidden" />
+            Iniciar oculto na bandeja (minimizado)
+          </label>
+        </fieldset>
+
+
+        <fieldset class="cfg-group">
+          <legend>Restart Agendado</legend>
+
+          <!-- Modo 1: Horário fixo -->
+          <label class="cfg-toggle">
+            <input type="checkbox" id="cfg-fixed-enabled" />
+            Horário fixo diário
+          </label>
+          <label id="cfg-fixed-time-label" class="cfg-sub-label">Horário (HH:MM)
+            <input type="time" id="cfg-schedTime" />
+          </label>
+
+          <!-- Modo 2: Intervalo desde o último start -->
+          <label class="cfg-toggle" style="margin-top:12px">
+            <input type="checkbox" id="cfg-interval-enabled" />
+            Intervalo desde o último start
+          </label>
+          <label id="cfg-interval-time-label" class="cfg-sub-label">A cada (horas)
+            <input type="number" id="cfg-schedInterval" min="1" max="168" step="0.5" />
+          </label>
+        </fieldset>
+
+        <fieldset class="cfg-group">
+          <legend>Atalhos</legend>
+          <label>Atalho para Restart
+            <input type="text" id="cfg-shortcut-restart" placeholder="Ctrl+Shift+9" readonly
+                   title="Clique e pressione a combinação de teclas desejada" />
+          </label>
+          <small style="color:#666; font-size:11px">Clique no campo e pressione a combinação desejada</small>
+        </fieldset>
+
+        <fieldset class="cfg-group">
+          <legend>Painel Remoto (WebSocket)</legend>
+          <label class="cfg-toggle">
+            <input type="checkbox" id="cfg-remote-enabled" />
+            Ativar painel remoto
+          </label>
+          <label id="cfg-remote-port-label" class="cfg-sub-label">Porta
+            <input type="number" id="cfg-remote-port" min="1024" max="65535" value="9999" />
+          </label>
+        </fieldset>
+
+      </div>
+      <div class="modal-footer">
+        <button class="cfg-save-btn" id="cfg-save">SALVAR</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

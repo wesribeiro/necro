@@ -1,0 +1,323 @@
+/* ═══════════════════════════════════════════════════════════════════
+   NECRO — Estilos
+   Tema: terminal industrial, fundo escuro, redimensionável
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #111111;
+  --bg-log:     #222222;
+  --bg-modal:   #1c1c1c;
+  --font:       'VT323', 'Courier New', monospace;
+
+  /* Cores dos textos de status */
+  --clr-run:     #4cdd4c;
+  --clr-stop:    #ff4444;
+  --clr-restart: #f5a623;
+  --clr-pause:   #888888;
+
+  /* Botões de controle */
+  --btn-pause:    #f5c400;
+  --btn-resume:   #28c940;
+  --btn-restart:  #b85c00;
+  --btn-kill:     #c0392b;
+
+  /* Titlebar */
+  --tb-h:  36px;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: #e0e0e0;
+  font-family: var(--font);
+  user-select: none;
+}
+
+/* Layout flex vertical que se adapta ao redimensionamento */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Titlebar ──────────────────────────────────────────────────── */
+.titlebar {
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--tb-h); flex-shrink: 0;
+  background: #000;
+  padding: 0 10px;
+  -webkit-app-region: drag;
+}
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 10px;
+}
+.titlebar-logo {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+.titlebar-label {
+  font-size: 11px; letter-spacing: 2px; color: #ffffff; text-transform: uppercase; font-weight: bold;
+}
+.titlebar-controls {
+  display: flex; gap: 7px;
+  -webkit-app-region: no-drag;
+}
+.tb-btn {
+  width: 13px; height: 13px; border-radius: 50%; border: none;
+  cursor: pointer; outline: none; transition: filter .15s;
+}
+.tb-btn:hover  { filter: brightness(1.3); }
+.tb-btn:active { transform: scale(.88); }
+.tb-minimize      { background: var(--btn-pause); }
+.tb-expand-height { background: #28c940; }
+.tb-close         { background: #ff3b30; }
+
+/* ─── Painel de status ──────────────────────────────────────────── */
+.status-panel {
+  position: relative;
+  margin: 12px 12px 8px;
+  padding: 14px 16px;
+  border-radius: 4px;
+  background: #2a5a2a;   /* verde fixo — não muda com o status */
+  border: 1px solid #3a7a3a;
+  flex-shrink: 0;
+}
+
+/* Removído: .status-header não existe mais (engrenagem é absoluta) */
+
+.status-lines { flex: 1; }
+
+.status-line {
+  display: flex; gap: 8px; line-height: 1.85;
+}
+.status-key {
+  font-size: 16px; color: rgba(255,255,255,0.60); letter-spacing: 1px;
+}
+.status-val {
+  font-size: 16px; color: #fff; font-weight: bold; letter-spacing: 1px;
+}
+
+/* Cores dos textos de status — sobre fundo verde do card */
+.status-indicator.s-running    { color: #00ff88; text-shadow: 0 0 6px rgba(0,255,136,.4); }
+.status-indicator.s-not-found  { color: #ff4444; text-shadow: 0 0 6px rgba(255,68,68,.4); font-weight: bold; }
+.status-indicator.s-restarting { color: #ffd000; text-shadow: 0 0 6px rgba(255,208,0,.3); }
+.status-indicator.s-paused     { color: rgba(255,255,255,0.40); }
+
+/* Countdown de próxima verificação */
+.next-check {
+  font-size: 11px;
+  color: rgba(255,255,255,0.30);
+  margin-left: 8px;
+  font-family: 'VT323', monospace;
+  letter-spacing: 0;
+}
+
+/* Engrenagem: canto superior direito do card */
+.gear-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  background: none; border: none; cursor: pointer;
+  font-size: 17px; color: rgba(0,0,0,0.35); padding: 2px 4px;
+  transition: color .2s, transform .35s;
+  -webkit-app-region: no-drag;
+  line-height: 1;
+}
+.gear-btn:hover  { color: rgba(0,0,0,0.75); transform: rotate(60deg); }
+.gear-btn:active { color: #000; }
+
+/* ─── Botões de controle ────────────────────────────────────────── */
+.controls {
+  display: flex; gap: 8px;
+  padding: 0 12px; margin-bottom: 8px; flex-shrink: 0;
+}
+.ctrl-btn {
+  flex: 1; padding: 12px 0; border: none; border-radius: 4px;
+  font-family: var(--font); font-size: 16px; font-weight: bold;
+  letter-spacing: 1px; cursor: pointer;
+  transition: background .15s, transform .1s;
+  -webkit-app-region: no-drag;
+}
+.ctrl-btn:active  { transform: scale(.97); }
+.ctrl-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+.ctrl-pause   { background: var(--btn-pause);   color: #000; }
+.ctrl-pause:hover  { filter: brightness(.85); }
+
+/* Botão RETOMAR — verde */
+.ctrl-resume  { background: var(--btn-resume);  color: #000; }
+.ctrl-resume:hover { filter: brightness(.85); }
+
+.ctrl-restart { background: var(--btn-restart); color: #fff; }
+.ctrl-restart:hover { filter: brightness(1.2); }
+
+.ctrl-kill    { background: var(--btn-kill);    color: #fff; }
+.ctrl-kill:hover    { filter: brightness(1.2); }
+
+/* ─── Feed de log ───────────────────────────────────────────────── */
+.log-feed {
+  flex: 1;           /* ocupa todo o espaço restante */
+  margin: 0 12px 12px;
+  padding: 10px 12px;
+  background: var(--bg-log);
+  border-radius: 4px;
+  overflow-y: auto;
+  min-height: 0;     /* essencial para o flex funcionar */
+  user-select: text;
+}
+.log-feed::-webkit-scrollbar       { width: 5px; }
+.log-feed::-webkit-scrollbar-track { background: #1a1a1a; }
+.log-feed::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+.log-feed::-webkit-scrollbar-thumb:hover { background: #666; }
+
+.log-line {
+  font-size: 16px; color: #bbb; line-height: 1.5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  animation: fadeIn .15s ease;
+  cursor: default;
+  border-radius: 2px;
+  transition: background .1s;
+}
+.log-line:hover {
+  background: rgba(255,255,255,0.06);
+  color: #ddd;
+}
+.log-line.log-warn  { color: var(--clr-restart); }
+.log-line.log-error { color: var(--clr-stop); }
+.log-line.log-ok    { color: var(--clr-run); }
+.log-line.log-count { color: #666; font-style: italic; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Modal de configurações ────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid #333;
+  border-radius: 6px;
+  width: calc(100% - 24px);
+  max-height: calc(100% - 60px);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.modal-title { font-size: 13px; color: #ccc; letter-spacing: 1px; }
+.modal-close {
+  background: none; border: none; color: #666; font-size: 14px;
+  cursor: pointer; padding: 2px 6px;
+  transition: color .2s;
+}
+.modal-close:hover { color: #fff; }
+
+.modal-body {
+  overflow-y: auto; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 14px;
+  flex: 1;
+}
+.modal-body::-webkit-scrollbar       { width: 4px; }
+.modal-body::-webkit-scrollbar-track { background: #1a1a1a; }
+.modal-body::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+.cfg-group {
+  border: 1px solid #2d2d2d;
+  border-radius: 4px;
+  padding: 10px 12px 12px;
+}
+.cfg-group legend {
+  font-size: 10px; letter-spacing: 2px; color: #555;
+  text-transform: uppercase; padding: 0 6px;
+}
+.cfg-group label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 11px; color: #777;
+  margin-top: 10px;
+}
+.cfg-group label:first-of-type { margin-top: 8px; }
+
+.cfg-group input[type="text"],
+.cfg-group input[type="number"],
+.cfg-group input[type="time"],
+.cfg-group select {
+  background: #111; border: 1px solid #333; border-radius: 3px;
+  color: #ccc; font-family: var(--font); font-size: 12px;
+  padding: 6px 8px; outline: none;
+  transition: border-color .2s;
+}
+.cfg-group input:focus,
+.cfg-group select:focus { border-color: #555; }
+
+.process-select {
+  flex: 1;
+  min-width: 0;
+  background: #111; border: 1px solid #333; border-radius: 3px;
+  color: #ccc; font-family: var(--font); font-size: 12px;
+  padding: 6px 8px; outline: none;
+  transition: border-color .2s;
+  cursor: pointer;
+}
+.process-select:focus { border-color: #555; }
+
+/* Linha path-row: input ocupa toda largura, botão fica à direita */
+.path-row {
+  display: flex; gap: 6px; align-items: stretch;
+}
+.path-row input { flex: 1; min-width: 0; }
+.browse-btn {
+  background: #1e1e1e; border: 1px solid #333; border-radius: 3px;
+  color: #888; font-size: 14px; padding: 0 10px;
+  cursor: pointer; transition: background .2s, color .2s; flex-shrink: 0;
+}
+.browse-btn:hover  { background: #2a2a2a; color: #ccc; }
+.browse-btn:active { background: #333; }
+
+.cfg-toggle {
+  flex-direction: row !important; align-items: center;
+  gap: 8px !important; color: #999 !important; cursor: pointer;
+}
+.cfg-toggle input { width: auto; accent-color: var(--clr-run); }
+
+.cfg-sched-opts { display: flex; flex-direction: column; }
+
+/* Label indentada abaixo de cada checkbox de agendamento */
+.cfg-sub-label {
+  margin-left: 20px !important;
+  margin-top: 6px !important;
+}
+
+.modal-footer {
+  padding: 10px 16px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.cfg-save-btn {
+  width: 100%; padding: 11px;
+  background: #1a4d1a; border: 1px solid #2a6b2a; border-radius: 4px;
+  color: var(--clr-run); font-family: var(--font); font-size: 13px;
+  font-weight: bold; letter-spacing: 2px; cursor: pointer;
+  transition: background .2s;
+}
+.cfg-save-btn:hover { background: #1e5c1e; }
+.cfg-save-btn:active { transform: scale(.98); }

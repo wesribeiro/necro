@@ -1,0 +1,32 @@
+{
+  "autoStart": true,
+  "startHidden": false,
+  "remotePanel": {
+    "enabled": false,
+    "port": 9999
+  },
+  "shortcuts": {
+    "restart": "Ctrl+Shift+9"
+  },
+  "monitor": {
+    "processName": "monitor.exe",
+    "executablePath": "C:\\FrCaixaMonitor\\monitor.exe",
+    "checkIntervalSeconds": 30,
+    "maxRetries": 3,
+    "retryDelaySeconds": 10,
+    "restartWaitSeconds": 10
+  },
+  "scheduledRestart": {
+    "fixedTime": {
+      "enabled": false,
+      "time": "06:00"
+    },
+    "interval": {
+      "enabled": false,
+      "hours": 3
+    }
+  },
+  "server": {
+    "name": "Monitoramento"
+  }
+}
