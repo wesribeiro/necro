@@ -19,6 +19,8 @@ ws://<IP_DA_MÁQUINA>:<PORTA>
 ```
 Exemplo: `ws://192.168.1.100:9999`
 
+> **Identificação por nome do servidor:** Cada mensagem enviada pelo NECRO inclui o campo `"server"` com o valor configurado em **Configurações → Nome do servidor**. O painel central deve usar esse campo para identificar e indexar cada máquina monitorada. Quando o usuário configurar `"SRV-PDV-01"`, todas as mensagens daquela instância virão com `"server": "SRV-PDV-01"`.
+
 ---
 
 ## Mensagens Enviadas pelo NECRO (Server → Client)

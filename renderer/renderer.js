@@ -192,29 +192,28 @@ api.onTick((data) => {
   }
 });
 
-// Atualiza as linhas de agendamento e mantém countdowns corretos
+// Atualiza as linhas de agendamento no painel
 function updateScheduleRows(cfg) {
   if (!cfg) return;
   _localCfg = cfg;
   const ft = (cfg.scheduledRestart || {}).fixedTime || {};
   const iv  = (cfg.scheduledRestart || {}).interval  || {};
 
-  // Reinício Diário
-  if (ft.enabled) {
-    startDiarioCountdown(ft.time);
-  } else {
-    clearInterval(_diarioTimer);
-    const rowDiario = document.getElementById('row-reinicio-diario');
-    if (rowDiario) rowDiario.hidden = true;
+  // Reinício Diário: mostra apenas o horário configurado
+  const rowDiario = document.getElementById('row-reinicio-diario');
+  const valDiario = document.getElementById('val-reinicio-diario');
+  if (rowDiario && valDiario) {
+    rowDiario.hidden = !ft.enabled;
+    if (ft.enabled) valDiario.textContent = ft.time || '--:--';
   }
 
-  // Reinício Automático — se desativado, esconde; se ativado, aguarda próximo tick
+  // Reinício Automático: esconde se desativado; countdown vem via monitor:tick
   if (!iv.enabled) {
     clearInterval(_autoTimer);
     const rowAuto = document.getElementById('row-reinicio-auto');
     if (rowAuto) rowAuto.hidden = true;
   }
-  // Se iv.enabled, o próximo monitor:tick vai iniciar o countdown automaticamente
+  // Se iv.enabled, o próximo monitor:tick iniciará o countdown automaticamente
 }
 
 
@@ -254,6 +253,19 @@ function applyStatus(data) {
   Object.values(STATUS_CLS).forEach((c) => valStatus.classList.remove(c));
   const cls = STATUS_CLS[data.status];
   if (cls) valStatus.classList.add(cls);
+
+  // Atualiza linha MONITORAMENTO
+  if (valMonitoramento) {
+    if (data.status === 'Pausado') {
+      valMonitoramento.textContent = 'Pausado';
+      valMonitoramento.style.color = 'rgba(255,255,255,0.40)';
+      // Esconde countdown ao pausar
+      if (valNextCheck) valNextCheck.textContent = '';
+    } else {
+      valMonitoramento.textContent = 'Ativo';
+      valMonitoramento.style.color = '';
+    }
+  }
 
   // PAUSAR ↔ RETOMAR
   if (data.status === 'Pausado') {
