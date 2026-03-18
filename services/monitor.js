@@ -100,6 +100,7 @@ class Monitor {
       processName: this.config.processName,
       status:      this.status,
       lastStart:   this.lastStart ? this._formatTime(this.lastStart) : '--:--:--',
+      lastStartTs: this.lastStart ? this.lastStart.getTime() : null,
       serverName:  this.serverName,
     };
   }

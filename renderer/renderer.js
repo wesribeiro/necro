@@ -150,46 +150,34 @@ function startCheckCountdown(initialSecs) {
   _checkTimer = setInterval(tick, 1000);
 }
 
-// Inicia countdown do reinício automático (por intervalo)
-function startAutoCountdown(initialSecs) {
+// Inicia countdown do reinício automático calculando localmente (não depende de ticks)
+// lastStartTs = timestamp em ms do último start; intervalHours = horas do intervalo
+let _lastStartTs   = null;
+let _intervalHours = null;
+
+function startAutoCountdown(lastStartTs, intervalHours) {
   clearInterval(_autoTimer);
   const rowAuto = document.getElementById('row-reinicio-auto');
   const valAuto = document.getElementById('val-reinicio-auto');
   if (!rowAuto || !valAuto) return;
-  if (initialSecs === null) { rowAuto.hidden = true; return; }
+  if (!lastStartTs || !intervalHours) { rowAuto.hidden = true; return; }
+
   rowAuto.hidden = false;
-  let s = Math.max(0, initialSecs);
-  const tick = () => { valAuto.textContent = fmtCountdown(s); if (s > 0) s--; };
+  const intervalMs = intervalHours * 3600 * 1000;
+
+  const tick = () => {
+    const elapsed  = Date.now() - lastStartTs;
+    const secsLeft = Math.max(0, Math.round((intervalMs - elapsed) / 1000));
+    valAuto.textContent = fmtCountdown(secsLeft);
+  };
   tick();
   _autoTimer = setInterval(tick, 1000);
 }
 
-// Inicia countdown do reinício diário (por horário fixo)
-function startDiarioCountdown(timeStr) {
-  clearInterval(_diarioTimer);
-  const rowDiario = document.getElementById('row-reinicio-diario');
-  const valDiario = document.getElementById('val-reinicio-diario');
-  if (!rowDiario || !valDiario) return;
-  if (!timeStr) { rowDiario.hidden = true; return; }
-  rowDiario.hidden = false;
-  let s = secsUntilTime(timeStr);
-  const tick = () => {
-    valDiario.textContent = fmtCountdown(s);
-    if (s > 0) { s--; }
-    else { s = secsUntilTime(timeStr); } // reinicia para o dia seguinte
-  };
-  tick();
-  _diarioTimer = setInterval(tick, 1000);
-}
-
-// Recebe tick do main process → reinicia timers locais com o valor fresco
+// Recebe tick do main process → reinicia APENAS o countdown de verificação
 api.onTick((data) => {
   if (!data) return;
   startCheckCountdown(data.secsLeft);
-  // intervalSecsLeft: null = desativado, número = ativo
-  if (typeof data.intervalSecsLeft === 'number') {
-    startAutoCountdown(data.intervalSecsLeft);
-  }
 });
 
 // Atualiza as linhas de agendamento no painel
@@ -199,7 +187,7 @@ function updateScheduleRows(cfg) {
   const ft = (cfg.scheduledRestart || {}).fixedTime || {};
   const iv  = (cfg.scheduledRestart || {}).interval  || {};
 
-  // Reinício Diário: mostra apenas o horário configurado
+  // Reinício Diário: mostra apenas o horário configurado (sem countdown)
   const rowDiario = document.getElementById('row-reinicio-diario');
   const valDiario = document.getElementById('val-reinicio-diario');
   if (rowDiario && valDiario) {
@@ -207,13 +195,15 @@ function updateScheduleRows(cfg) {
     if (ft.enabled) valDiario.textContent = ft.time || '--:--';
   }
 
-  // Reinício Automático: esconde se desativado; countdown vem via monitor:tick
-  if (!iv.enabled) {
+  // Reinício Automático: inicia countdown local se temos lastStart e intervalo
+  _intervalHours = iv.enabled ? iv.hours : null;
+  if (iv.enabled && _lastStartTs) {
+    startAutoCountdown(_lastStartTs, iv.hours);
+  } else if (!iv.enabled) {
     clearInterval(_autoTimer);
     const rowAuto = document.getElementById('row-reinicio-auto');
     if (rowAuto) rowAuto.hidden = true;
   }
-  // Se iv.enabled, o próximo monitor:tick iniciará o countdown automaticamente
 }
 
 
@@ -264,6 +254,14 @@ function applyStatus(data) {
     } else {
       valMonitoramento.textContent = 'Ativo';
       valMonitoramento.style.color = '';
+    }
+  }
+
+  // Captura lastStartTs e (re)inicia countdown do Reinício Automático
+  if (data.lastStartTs && data.lastStartTs !== _lastStartTs) {
+    _lastStartTs = data.lastStartTs;
+    if (_intervalHours) {
+      startAutoCountdown(_lastStartTs, _intervalHours);
     }
   }
 
