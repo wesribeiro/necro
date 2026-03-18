@@ -83,6 +83,10 @@ let busy = false;
 
     const status = await api.getStatus();
     applyStatus(status);
+
+    // Carrega config para exibir linhas de agendamento no painel
+    const cfg = await api.getConfig();
+    updateScheduleRows(cfg);
   } catch (e) {
     addLogLine('--:--:--', 'Erro ao carregar status inicial', 'log-error');
   }
@@ -99,16 +103,42 @@ api.onLog((data) => {
   addLogLine(data.time, data.message, cls, data.date || '');
 });
 
-// Countdown até a próxima verificação
-const valNextCheck = document.getElementById('val-next-check');
+// Countdown até a próxima verificação — agora na linha MONITORAMENTO
+const valNextCheck    = document.getElementById('val-next-check');
+const valMonitoramento= document.getElementById('val-monitoramento');
+
 api.onTick((data) => {
-  if (!valNextCheck) return;
+  if (!valNextCheck || !valMonitoramento) return;
   if (data && data.secsLeft > 0) {
     valNextCheck.textContent = `⋅ ${data.secsLeft}s`;
   } else {
     valNextCheck.textContent = '';
   }
 });
+
+// Atualiza as linhas de reinicio agendado com base na config
+function updateScheduleRows(cfg) {
+  if (!cfg) return;
+  const ft = (cfg.scheduledRestart || {}).fixedTime || {};
+  const iv = (cfg.scheduledRestart || {}).interval  || {};
+
+  const rowDiario = document.getElementById('row-reinicio-diario');
+  const rowAuto   = document.getElementById('row-reinicio-auto');
+  const valDiario = document.getElementById('val-reinicio-diario');
+  const valAuto   = document.getElementById('val-reinicio-auto');
+
+  if (rowDiario && valDiario) {
+    rowDiario.hidden = !ft.enabled;
+    if (ft.enabled) valDiario.textContent = ft.time || '--:--';
+  }
+  if (rowAuto && valAuto) {
+    rowAuto.hidden = !iv.enabled;
+    if (iv.enabled) {
+      const h = iv.hours;
+      valAuto.textContent = Number.isInteger(h) ? `${h}h` : `${h}h`;
+    }
+  }
+}
 
 api.onStatusChanged((data) => {
   applyStatus(data);
@@ -160,8 +190,13 @@ function applyStatus(data) {
 // ─── Feed de log ──────────────────────────────────────────────────────────
 function addLogLine(time, message, extraClass = '', date = '') {
   const shortText = `${time} -- ${message}`;
-  // Tooltip mostra data completa ao fazer hover
-  const fullText  = date ? `${date} ${time} -- ${message}` : shortText;
+  // Tooltip: data no formato DD/MM/YYYY HH:MM:SS
+  let dataBR = date;
+  if (date && date.includes('-')) {
+    const [y, m, d] = date.split('-');
+    dataBR = `${d}/${m}/${y}`;
+  }
+  const fullText = dataBR ? `${dataBR} ${time} -- ${message}` : shortText;
   const line = document.createElement('div');
   line.className   = `log-line${extraClass ? ' ' + extraClass : ''}`;
   line.textContent = shortText;
@@ -338,6 +373,7 @@ btnSave.addEventListener('click', async () => {
   const result = await api.saveConfig(newCfg);
   if (result.status === 'ok') {
     addLogLine(now(), 'Configurações salvas e aplicadas', 'log-ok');
+    updateScheduleRows(newCfg);  // atualiza painel imediatamente
     modalOverlay.hidden = true;
   } else {
     addLogLine(now(), `Erro ao salvar: ${result.message}`, 'log-error');

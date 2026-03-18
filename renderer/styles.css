@@ -115,9 +115,34 @@ body {
 .next-check {
   font-size: 11px;
   color: rgba(255,255,255,0.30);
-  margin-left: 8px;
+  margin-left: 6px;
   font-family: 'VT323', monospace;
   letter-spacing: 0;
+  align-self: center;
+}
+
+/* Divisor entre linhas principais e linhas de agendamento */
+.status-divider {
+  height: 1px;
+  background: rgba(0,0,0,0.20);
+  margin: 4px 0;
+}
+
+/* Sub-linhas: monitoramento, reinício diário, reinício automático */
+.status-line-sub {
+  line-height: 1.6;
+}
+.status-key-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.status-val-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.80);
+  font-weight: bold;
+  letter-spacing: 0.5px;
 }
 
 /* Engrenagem: canto superior direito do card */
